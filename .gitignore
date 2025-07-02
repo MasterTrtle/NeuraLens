@@ -1,0 +1,28 @@
+# Gradle files
+.gradle
+build/
+
+# Local configuration file (sdk.dir, etc)
+local.properties
+
+# Log files
+*.log
+
+# Android Studio generated files
+.idea/
+.cxx/
+*.iml
+*/build/
+capture.keystore
+
+# Mac files
+.DS_Store
+
+# Flutter files
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.metadata
+
+# VSCode files
+.vscode/

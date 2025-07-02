@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!-- TODO: Remove the following two lines to disable backup and restore of domain specific content. -->
+    <include
+        domain="sharedpref"
+        path="." />
+    <exclude
+        domain="sharedpref"
+        path="device.xml" />
+</full-backup-content>
