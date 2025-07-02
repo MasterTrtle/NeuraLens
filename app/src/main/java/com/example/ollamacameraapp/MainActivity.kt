@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Base64
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -32,21 +33,25 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import com.example.ollamacameraapp.ui.theme.OllamaCameraAppTheme
 import io.ktor.client.HttpClient
-import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.delay
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.io.File
 import java.util.concurrent.Executor
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
+
+private val json = Json { ignoreUnknownKeys = true }
 
 class MainActivity : ComponentActivity() {
 
@@ -93,7 +98,7 @@ class MainActivity : ComponentActivity() {
                     Text(
                         text = description,
                         modifier = Modifier.align(Alignment.BottomCenter),
-                        color = Color.White,
+                        color = Color.Black,
                         fontSize = 24.sp
                     )
                 }
@@ -102,16 +107,37 @@ class MainActivity : ComponentActivity() {
                     while (true) {
                         try {
                             val file = takePicture(imageCapture)
-                            val response: OllamaResponse = client.post("http://YOUR_OLLAMA_SERVER_IP:11434/api/generate") {
+                            val accessToken = "YOUR_ACCESS_TOKEN" // TODO: Replace with your access token
+                            val rawResponse: String = client.post("https://4742556489435054080.europe-west4-205700227746.prediction.vertexai.goog/v1/projects/gemma-hcls25par-723/locations/europe-west4/endpoints/4742556489435054080:predict") {
+                                header("Authorization", "Bearer $accessToken")
                                 contentType(ContentType.Application.Json)
-                                setBody(OllamaRequest(
-                                    model = "llava:7b",
-                                    prompt = "what is in this picture?",
-                                    stream = false,
-                                    images = listOf(Base64.encodeToString(file.readBytes(), Base64.NO_WRAP))
-                                ))
-                            }.body()
-                            description = response.response
+                                setBody(VertexRequest(
+                                    instances = listOf(
+                                        Instance(
+                                            requestFormat = "chatCompletions",
+                                            messages = listOf(
+                                                Message(
+                                                    role = "user",
+                                                    content = listOf(
+                                                        Content(
+                                                            type = "text",
+                                                            text = "Describe the picture in one sentence. example: A person holding a smartphone."
+                                                        ),
+                                                        Content(
+                                                            type = "image_url",
+                                                            image_url = ImageUrl(url = "data:image/jpeg;base64," + Base64.encodeToString(file.readBytes(), Base64.NO_WRAP)
+                                                        )
+                                                    )
+                                                )
+                                            )
+                                        )
+                                    )
+                                )))
+                            }.bodyAsText()
+                            Log.d("VertexResponse", rawResponse)
+                            // use json with ignoreUnknownKeys to parse the response
+                            val response = json.decodeFromString<VertexResponse>(rawResponse)
+                            description = response.predictions.choices.firstOrNull()?.message?.content ?: "No description found"
                             file.delete()
                         } catch (e: Exception) {
                             description = e.message ?: "Error"
@@ -144,17 +170,55 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+
 @Serializable
-data class OllamaRequest(
-    val model: String,
-    val prompt: String,
-    val stream: Boolean,
-    val images: List<String>
+data class ImageUrl(
+    val url: String
 )
 
 @Serializable
-data class OllamaResponse(
-    val response: String
+data class Content(
+    val type: String,
+    val text: String? = null,
+    val image_url: ImageUrl? = null
+)
+
+@Serializable
+data class Message(
+    val role: String,
+    val content: List<Content>
+)
+
+@Serializable
+data class Instance(
+    @SerialName("@requestFormat")
+    val requestFormat: String,
+    val messages: List<Message>
+)
+
+@Serializable
+data class VertexRequest(
+    val instances: List<Instance>
+)
+
+@Serializable
+data class ContentPart(
+    val content: String
+)
+
+@Serializable
+data class Candidate(
+    val message: ContentPart
+)
+
+@Serializable
+data class Prediction(
+    val choices: List<Candidate>
+)
+
+@Serializable
+data class VertexResponse(
+    val predictions: Prediction
 )
 
 @Composable
