@@ -46,6 +46,9 @@ import kotlinx.coroutines.delay
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import java.io.File
 import java.util.concurrent.Executor
 import kotlin.coroutines.resume
@@ -107,8 +110,8 @@ class MainActivity : ComponentActivity() {
                     while (true) {
                         try {
                             val file = takePicture(imageCapture)
-                            val accessToken = "YOUR_ACCESS_TOKEN" // TODO: Replace with your access token
-                            val rawResponse: String = client.post("https://4742556489435054080.europe-west4-205700227746.prediction.vertexai.goog/v1/projects/gemma-hcls25par-723/locations/europe-west4/endpoints/4742556489435054080:predict") {
+                            val accessToken = "YOUR_ACCESS" // TODO: Replace with your actual access token
+                            val rawResponse: String = client.post("https://europe-west4-aiplatform.googleapis.com/v1/projects/gemma-hcls25par-723/locations/europe-west4/endpoints/1949198820558503936:predict") {
                                 header("Authorization", "Bearer $accessToken")
                                 contentType(ContentType.Application.Json)
                                 setBody(VertexRequest(
@@ -137,7 +140,7 @@ class MainActivity : ComponentActivity() {
                             Log.d("VertexResponse", rawResponse)
                             // use json with ignoreUnknownKeys to parse the response
                             val response = json.decodeFromString<VertexResponse>(rawResponse)
-                            description = response.predictions.choices.firstOrNull()?.message?.content ?: "No description found"
+                            description = response.getContent() ?: "No description found"
                             file.delete()
                         } catch (e: Exception) {
                             description = e.message ?: "Error"
@@ -202,24 +205,27 @@ data class VertexRequest(
 )
 
 @Serializable
-data class ContentPart(
-    val content: String
-)
-
-@Serializable
-data class Candidate(
-    val message: ContentPart
-)
-
-@Serializable
-data class Prediction(
-    val choices: List<Candidate>
-)
-
-@Serializable
 data class VertexResponse(
-    val predictions: Prediction
-)
+    val predictions: JsonArray,
+    val deployedModelId: String,
+    val model: String,
+    val modelDisplayName: String,
+    val modelVersionId: String
+) {
+    fun getContent(): String? {
+        return try {
+            // The predictions array has the first element as an array of choices
+            val firstElement = predictions.firstOrNull() as? JsonArray
+            val firstChoice = firstElement?.firstOrNull() as? JsonObject
+            val message = firstChoice?.get("message") as? JsonObject
+            val content = message?.get("content") as? JsonPrimitive
+            content?.content
+        } catch (e: Exception) {
+            Log.e("VertexResponse", "Error extracting content: ${e.message}")
+            null
+        }
+    }
+}
 
 @Composable
 fun CameraPreview(modifier: Modifier, imageCapture: ImageCapture) {
