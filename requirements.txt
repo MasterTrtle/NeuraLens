@@ -1,0 +1,11 @@
+dotenv
+ipykernel==6.29.5
+torch
+torchvision
+accelerate 
+bitsandbytes
+transformers
+peft
+datasets
+scikit-learn
+ipywidgets

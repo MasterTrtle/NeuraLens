@@ -1,5 +1,21 @@
 # NeuraLens
 
+# Setup
+
+create a .env with HF_TOKEN
+
+```bash
+conda create -n medgemma python=3.10.17
+pip install -r requirements.txt
+```
+
+# TO DO
+fix the batch training (currently only work with batch_size=1)
+refractor the notebook fine tuning code in multiples files (eg training.py, ...)
+add evaluate function
+change the training to also predict the other labels ()
+
+
 ## Building and Debugging
 
 This project uses Gradle for building. You can use Android Studio or the command line to build and debug the app.

@@ -26,3 +26,13 @@ capture.keystore
 
 # VSCode files
 .vscode/
+
+
+# .env file
+.env
+
+# src/dataset/
+src/dataset/
+
+#all __pycache__ folders
+**/__pycache__/
