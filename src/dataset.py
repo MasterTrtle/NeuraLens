@@ -89,14 +89,13 @@ class tissue_dataset:
             type_name: idx for idx, type_name in enumerate(self.type_classes)
         }
 
-
         # Convert zoom and type to indices
         zoom_indices = [self.zoom_to_idx[z] for z in zoom]
         type_indices = [self.type_to_idx[t] for t in type_labels]
 
         # Split data before creating HuggingFace datasets
         self._split_data(images, focus, zoom_indices, type_indices)
-        
+
         type_classes_mapping = {v: k for k, v in self.type_to_idx.items()}
         zoom_classes_mapping = {v: k for k, v in self.zoom_to_idx.items()}
         focus_classes_mapping = {0: "focused", 1: "unfocused"}
@@ -269,20 +268,21 @@ class tissue_dataset:
         zoom_value = self.zoom_classes[zoom_idx]
         focus_idx = example["focus"]
         focus_status = "focused" if focus_idx == 0 else "unfocused"
-        
+
         # Randomly choose between JSON and natural language responses (70% JSON, 30% natural)
         import random
+
         use_json = random.random() < 0.7
-        
+
         if use_json:
-            response_text = f'''{{
+            response_text = f"""{{
     "tissue_type": "{tissue_type_idx}: {tissue_type_name}",
     "zoom_level": "{zoom_idx}: {zoom_value}x",
     "focus_quality": "{focus_idx}: {focus_status}"
-    }}'''
+    }}"""
         else:
             response_text = f"This histopathology image shows {tissue_type_name} tissue at {zoom_value}x magnification. The image appears to be {focus_status}."
-        
+
         example["messages"] = [
             {
                 "role": "user",
@@ -299,7 +299,7 @@ class tissue_dataset:
             },
         ]
         return example
-    
+
     def _format_test_data(self, example: dict[str, Any]) -> dict[str, Any]:
         """Format data for chat-based training."""
         example["messages"] = [
@@ -318,37 +318,46 @@ class tissue_dataset:
         ]
         return example
 
-    def postprocess(self, prediction: list[dict[str, str]], do_full_match: bool = False) -> dict:
+    def postprocess(
+        self, prediction: list[dict[str, str]], do_full_match: bool = False
+    ) -> dict:
         response_text = prediction[0]["generated_text"]
-        
+
         # Clean the response text first
         response_text = response_text.strip()
-        
+
         # Try to extract the first JSON block
         import re
         import json
-        
+
         # Look for JSON pattern
-        json_pattern = r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}'
+        json_pattern = r"\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}"
         json_matches = re.findall(json_pattern, response_text)
-        
+
         for json_match in json_matches:
             try:
                 parsed = json.loads(json_match)
-                if all(key in parsed for key in ["tissue_type", "zoom_level", "focus_quality"]):
+                if all(
+                    key in parsed
+                    for key in ["tissue_type", "zoom_level", "focus_quality"]
+                ):
                     return {
-                        "tissue_type": self._extract_index(parsed.get("tissue_type", "")),
+                        "tissue_type": self._extract_index(
+                            parsed.get("tissue_type", "")
+                        ),
                         "zoom_level": self._extract_index(parsed.get("zoom_level", "")),
-                        "focus_quality": self._extract_index(parsed.get("focus_quality", ""))
+                        "focus_quality": self._extract_index(
+                            parsed.get("focus_quality", "")
+                        ),
                     }
             except (json.JSONDecodeError, KeyError):
                 continue
-        
+
         # Fallback to text parsing if no valid JSON found
         return {
             "tissue_type": self._extract_tissue_from_text(response_text),
             "zoom_level": self._extract_zoom_from_text(response_text),
-            "focus_quality": self._extract_focus_from_text(response_text)
+            "focus_quality": self._extract_focus_from_text(response_text),
         }
 
     def _extract_index(self, text: str) -> int:
@@ -357,6 +366,7 @@ class tissue_dataset:
             return int(text.split(":")[0].strip())
         except (ValueError, IndexError):
             return -1
+
     def __len__(self):
         return len(self.dataset["train"]) + len(self.dataset["validation"])
 
