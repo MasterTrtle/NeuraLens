@@ -36,3 +36,6 @@ src/dataset/
 
 #all __pycache__ folders
 **/__pycache__/
+
+# the folders inside src/models
+src/models/**

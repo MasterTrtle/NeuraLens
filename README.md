@@ -10,10 +10,8 @@ pip install -r requirements.txt
 ```
 
 # TO DO
-fix the batch training (currently only work with batch_size=1)
-refractor the notebook fine tuning code in multiples files (eg training.py, ...)
-add evaluate function
-change the training to also predict the other labels ()
+1. (maybe try weighted loss, and change the loss compute to extract the predicted labels and do cross entropy on it)
+2. refractor the notebook fine tuning code in multiples files (eg training.py, ...) == 
 
 
 ## Building and Debugging

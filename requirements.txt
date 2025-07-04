@@ -9,3 +9,5 @@ peft
 datasets
 scikit-learn
 ipywidgets
+matplotlib
+evaluate
