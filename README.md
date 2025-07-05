@@ -1,5 +1,19 @@
 # NeuraLens
 
+# Setup
+
+create a .env with HF_TOKEN
+
+```bash
+conda create -n medgemma python=3.10.17
+pip install -r requirements.txt
+```
+
+# TO DO
+1. (maybe try weighted loss, and change the loss compute to extract the predicted labels and do cross entropy on it)
+2. refractor the notebook fine tuning code in multiples files (eg training.py, ...) == 
+
+
 ## Building and Debugging
 
 This project uses Gradle for building. You can use Android Studio or the command line to build and debug the app.
