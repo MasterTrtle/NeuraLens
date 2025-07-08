@@ -1,6 +1,9 @@
 # NeuraLens
 
-# Setup
+This project was build during "Hackaton Google : Solve for Healthcare & Life Sciences with Gemma" the 07/08/2025.
+
+![Poster](/assets/NeuraLens_poster.png)
+# Fine Tuning setup
 
 create a .env with HF_TOKEN
 
@@ -9,10 +12,15 @@ conda create -n medgemma python=3.10.17
 pip install -r requirements.txt
 ```
 
-# TO DO
-1. (maybe try weighted loss, and change the loss compute to extract the predicted labels and do cross entropy on it)
-2. refractor the notebook fine tuning code in multiples files (eg training.py, ...) == 
+Then use the notebook from notebooks/finetune.ipynb
 
+The Fine tuned model is also direcly available on huggingface https://huggingface.co/MasterTrtle/Merge-medgemma-4b-it-lora-tissue-classifier
+
+# Downloading directly the app:
+https://drive.google.com/file/d/1IfqtY7GVd-CdcJSUv8jDuaYx3vD_pULk/view?usp=sharing 
+
+
+# App Building
 
 ## Building and Debugging
 
